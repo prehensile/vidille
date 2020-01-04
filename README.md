@@ -1,3 +1,3 @@
 # vidille
 
-Renders videos as braille text characters using [drawille](https://github.com/asciimoo/drawille).
+Renders videos on the commandline using [drawille](https://github.com/asciimoo/drawille).
