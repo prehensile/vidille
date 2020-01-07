@@ -13,7 +13,7 @@ I'm pleasantly surprised it works at all,
 let alone at a reasonable frame rate!
 
 Requires:
-- Drawille: https://pypi.org/project/drawille/
+- drawille: https://pypi.org/project/drawille/
 - Pillow: https://pypi.org/project/Pillow/
 - PyAV (and its dependencies): https://pypi.org/project/av/
 
