@@ -9,29 +9,43 @@ import av
 
 class Player( object ):
     
-    def __init__( self, video_path, terminal_width=80, terminal_height=25 ):
+    def __init__( self, video_path ):
         self.container = av.open( video_path )
-        self.canvas_width = terminal_width *2
-        self.canvas_height = terminal_height *4
+        self.current_frame = None
+
     
-    def next_frame( self ):
-        frame = next(self.container.decode(video=0))
-        i = frame.to_image()
-        return vidille.image2term(
-            i.convert("L"),
-            canvas_width = self.canvas_width,
-            canvas_height = self.canvas_height,
-            dither = False,
-            invert = True
-        )
+    def advance_frame( self ):
+        f = next(self.container.decode(video=0))
+        self.current_frame = f.to_image()
+
+
+    def run( self ):
+        while True:
+            self.advance_frame()
+            gevent.sleep( 1.0 / 18.0 )
+
+    def render_screen( self, terminal_width=80, terminal_height=25 ):
+        screen = None
+        if self.current_frame:
+            return vidille.image2term(
+                self.current_frame.convert("L"),
+                canvas_width = terminal_width * 2,
+                canvas_height = terminal_height * 4,
+                dither = False,
+                invert = True
+            )
+        return screen
 
 
 num_clients = 0
+player = Player( "media/rick.mp4" ) 
+
 
 class MyTelnetHandler(TelnetHandler):
     
     PROMPT = ""
     WELCOME = ""
+
 
     def session_start( self ):
 
@@ -43,36 +57,40 @@ class MyTelnetHandler(TelnetHandler):
                 "Maximum number of connections reached. Please try later!"
             )
             self.finish()
-        else:
-            self.player = Player(
-                "media/rick.mp4",
-                terminal_width=self.WIDTH,
-                terminal_height=self.HEIGHT
-            ) 
+        else: 
             self.on_delay()
+
 
     def on_delay( self ):
         try:
             self.update()
             self.event = gevent.spawn_later(
-                1.0 / 25.0,
+                1.0 / 18.0,
                 self.on_delay
             )
         except Exception as e:
             logging.exception( e )
             self.finish()
     
-    def update( self ):
-        screen = self.player.next_frame()
-        # screen = screen.replace( "\n", "\r\n" )
 
-        # clear screen
+    def update( self ):
+
+        global player
+
+        #player.advance_frame()
+        screen = player.render_screen(
+            self.WIDTH,
+            self.HEIGHT
+        )
+      
+        # escape sequence: clear screen
         self.write( "\033[2J" )
-        # move cursor to top left
+        # escape sequence: move cursor to top left
         self.write( "\033[H" )
 
         self.write( screen, encoding='utf-8' )
     
+
     def session_end( self ):
         global num_clients
         logging.info( "Disconnected" )
@@ -86,6 +104,9 @@ logging.basicConfig(
 )
 
 server = gevent.server.StreamServer(("", 2020), MyTelnetHandler.streamserver_handle)
+
+greenlet = gevent.spawn( player.run )
+greenlet.start()
 
 try:
     server.serve_forever()
