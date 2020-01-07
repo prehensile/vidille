@@ -11,6 +11,10 @@ import av
 import config
 
 
+# global client count
+num_clients = 0
+
+
 """
 A simple video player to be shared across telnet clients.
 """
@@ -21,6 +25,7 @@ class Player( object ):
         # create an instance of av to extract frames from video
         self.container = av.open( video_path )
         self.current_frame = None
+        self.playing = False
 
     
     def advance_frame( self ):
@@ -33,11 +38,33 @@ class Player( object ):
 
     def run( self ):
         """
-        Main frame extraction loop. Runs as a greenlet.
-        """
+        Main frame extraction loop. Runs from a greenlet.
+        """ 
         while True:
-            self.advance_frame()
+            if self.playing:
+                self.advance_frame()
             gevent.sleep( config.FRAME_INTERVAL )
+       
+
+    def play( self ):
+
+        logging.info( "Player.play()")
+        
+        if not self.playing:
+
+            # rewind to start
+            self.container.seek( 0 )
+
+            # set playing flag. affects behaviour of self.run
+            self.playing = True
+
+
+    def stop( self ):
+        
+        logging.info( "Player.stop()")
+
+        # set playing flag. affects behaviour of self.run
+        self.playing = False
 
 
     def render_screen( self, terminal_width=80, terminal_height=25 ):
@@ -56,8 +83,7 @@ class Player( object ):
         return screen
 
 
-# global vars
-num_clients = 0
+# global player instance
 player = Player( config.MEDIA_FILE ) 
 
 
@@ -102,6 +128,10 @@ class MyTelnetHandler( TelnetHandler ):
         
         else: 
             ## start a new rendering session
+
+            if not player.playing:
+                player.play()
+
             # start update timer and render first frame
             self.on_delay()
 
@@ -179,6 +209,10 @@ class MyTelnetHandler( TelnetHandler ):
         # decrement global client counter
         num_clients -= 1
         logging.info( "%d clients currently connected", num_clients )
+
+        # stop the global player instance if we're the last connected client
+        if num_clients <=0:
+            player.stop()
 
 
 # log to console
