@@ -159,10 +159,8 @@ class MyTelnetHandler( TelnetHandler ):
                 self.on_delay
             )
        
-        except Exception as e:
-            # disconnect client on any exception
-            # this is mostly BrokenPipeError, but might be other things
-            logging.exception( e )
+        except BrokenPipeError:
+            # disconnect client if remote client has, in fact, disconnected
             self.finish()
     
 
