@@ -7,7 +7,7 @@ LABEL description="vidille Telnet Server"
 RUN apk upgrade --update &&  \
     apk add git ffmpeg-dev zlib-dev jpeg-dev pkgconfig build-base
 
-COPY media/rick.mp4 /opt/vidille/media
+COPY media/rick.mp4 /opt/vidille/media/
 COPY requirements.txt /opt/vidille/
 WORKDIR /opt/vidille
 RUN pip install -r requirements.txt
