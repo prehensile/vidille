@@ -12,7 +12,9 @@ COPY requirements.txt /opt/vidille/
 WORKDIR /opt/vidille
 RUN pip install -r requirements.txt
 
-COPY server.py vidille.py /opt/vidille/
+COPY vidille.py /opt/vidille/
+COPY config.py /opt/vidille/
+COPY server.py /opt/vidille/
 
 EXPOSE 2020
 ENTRYPOINT ["python", "server.py" ]
