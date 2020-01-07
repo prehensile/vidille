@@ -1,3 +1,8 @@
+TODO
 - add commandline args to vidille.py (dup image2term3 from drawille)
-- separate media path into an ini file from server.py
-- implement shared instance of Player across telnet clients
+- pull-request vidille.py to drawille repos
+- optimise?
+
+DONE
+☑️ separate media path into an ini file from server.py
+☑️ implement shared instance of Player across telnet clients
