@@ -32,8 +32,12 @@ class Player( object ):
         """
         Advance av instance by one frame and store an image of that frame.
         """
-        f = next(self.container.decode(video=0))
-        self.current_frame = f.to_image()
+        try:
+            f = next( self.container.decode(video=0) )
+            self.current_frame = f.to_image()
+        except StopIteration:
+            # loop container if we've hit the end
+            self.container.seek( 0 )
 
 
     def run( self ):
