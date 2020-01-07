@@ -52,7 +52,6 @@ class MyTelnetHandler(TelnetHandler):
     def session_start( self ):
 
         global num_clients
-        num_clients += 1
 
         if num_clients >= config.MAX_CLIENTS:
             self.writeline(
@@ -61,6 +60,8 @@ class MyTelnetHandler(TelnetHandler):
             self.finish()
         else: 
             self.on_delay()
+        
+        num_clients += 1
 
 
     def on_delay( self ):
