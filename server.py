@@ -1,3 +1,18 @@
+#!/usr/bin/env python
+
+"""
+server.py
+
+by prehensile [ twitter.com/prehensile | me@prehensile.co.uk ]
+2019-12 - 2020-01
+
+A telnet server which serves up vidille-rendered video to connected clients.
+
+Based on telnetsrvlib3: https://github.com/Blindfreddy/telnetsrvlib3
+
+"""
+
+
 import logging
 import time
 
