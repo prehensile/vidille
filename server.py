@@ -1,4 +1,5 @@
 import logging
+import time
 
 import gevent, gevent.server
 from telnetsrv.green import TelnetHandler
@@ -63,7 +64,7 @@ player = Player( config.MEDIA_FILE )
 """
 Telnet connection handler. Represents one connected client.
 """
-class MyTelnetHandler(TelnetHandler):
+class MyTelnetHandler( TelnetHandler ):
     
 
     # overwite default prompt and message with nothing, be silent.
@@ -79,16 +80,30 @@ class MyTelnetHandler(TelnetHandler):
 
         global num_clients
 
-        if num_clients >= config.MAX_CLIENTS:
+         # we'll use these to keep track of render rate
+        self.frames_rendered = 0
+        self.time_connected = time.time()
+
+        # increment global client counter
+        num_clients += 1
+        logging.info( "%d clients connected", num_clients )
+        
+        if num_clients > config.MAX_CLIENTS:
+
+            # display capacity message if we're at capacity
             self.writeline(
                 config.CAPACITY_MESSAGE
             )
+
+            logging.info( "-> server at capacity, send CAPACITY_MESSAGE to client")
+
+            # disconnect client
             self.finish()
-        else: 
-            self.on_delay()
         
-        # increment global client counter
-        num_clients += 1
+        else: 
+            ## start a new rendering session
+            # start update timer and render first frame
+            self.on_delay()
 
 
     """
@@ -97,12 +112,22 @@ class MyTelnetHandler(TelnetHandler):
     """
     def on_delay( self ):
         try:
+            
+            # render a frame to the client
             self.render()
+            
+            # store some stats
+            self.frames_rendered += 1
+            
+            # run this function again in FRAME_INTERVAL's worth of time
             self.event = gevent.spawn_later(
                 config.FRAME_INTERVAL,
                 self.on_delay
             )
+       
         except Exception as e:
+            # disconnect client on any exception
+            # this is mostly BrokenPipeError, but might be other things
             logging.exception( e )
             self.finish()
     
@@ -134,17 +159,32 @@ class MyTelnetHandler(TelnetHandler):
     Runs when client disconnects.
     """
     def session_end( self ):
+        
         global num_clients
+        
         logging.info( "Disconnected" )
-        # decerement global client counter
+        
+        if (self.frames_rendered is not None) and (self.frames_rendered > 0):
+            # calculate and output some stats
+            now = time.time()
+            connected_time = now - self.time_connected
+            logging.info(
+                "-> rendered {:d} frames in {:2.2f} seconds (avg {:2.2f} fps)".format(
+                    self.frames_rendered,
+                    connected_time,
+                    self.frames_rendered / connected_time
+                )
+            )
+        
+        # decrement global client counter
         num_clients -= 1
         logging.info( "%d clients currently connected", num_clients )
 
 
 # log to console
 logging.basicConfig(
-    level=logging.DEBUG,
-    handlers=[logging.StreamHandler()]
+    level= config.LOG_LEVEL,
+    handlers = [logging.StreamHandler()]
 )
 
 # set up a server instance
