@@ -6,6 +6,8 @@ from telnetsrv import telnetsrvlib
 import vidille
 import av
 
+import config
+
 
 class Player( object ):
     
@@ -22,7 +24,7 @@ class Player( object ):
     def run( self ):
         while True:
             self.advance_frame()
-            gevent.sleep( 1.0 / 18.0 )
+            gevent.sleep( config.FRAME_INTERVAL )
 
     def render_screen( self, terminal_width=80, terminal_height=25 ):
         screen = None
@@ -38,7 +40,7 @@ class Player( object ):
 
 
 num_clients = 0
-player = Player( "media/rick.mp4" ) 
+player = Player( config.MEDIA_FILE ) 
 
 
 class MyTelnetHandler(TelnetHandler):
@@ -52,9 +54,9 @@ class MyTelnetHandler(TelnetHandler):
         global num_clients
         num_clients += 1
 
-        if num_clients >= 4:
+        if num_clients >= config.MAX_CLIENTS:
             self.writeline(
-                "Maximum number of connections reached. Please try later!"
+                config.CAPACITY_MESSAGE
             )
             self.finish()
         else: 
@@ -65,7 +67,7 @@ class MyTelnetHandler(TelnetHandler):
         try:
             self.update()
             self.event = gevent.spawn_later(
-                1.0 / 18.0,
+                config.FRAME_INTERVAL,
                 self.on_delay
             )
         except Exception as e:
