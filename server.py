@@ -27,10 +27,6 @@ from av import AVError
 import config
 
 
-# global client count
-num_clients = 0
-
-
 """
 A simple video player to be shared across telnet clients.
 """
@@ -40,11 +36,11 @@ class Player( object ):
     def __init__( self, video_path ):
         # create an instance of av to extract frames from video
         self.container = av.open( video_path )
+        self.last_frame_time = 0
         self.current_frame = None
-        self.playing = False
 
-    
-    def advance_frame( self ):
+
+    def get_next_frame( self ):
         """
         Advance av instance by one frame and store an image of that frame.
         """
@@ -55,37 +51,19 @@ class Player( object ):
             # loop container if we've hit the end
             self.container.seek( 0 )
             logging.debug( "loop!")
+        return self.current_frame
+        
 
-
-    def run( self ):
+    def update_frame( self ):
         """
-        Main frame extraction loop. Runs from a greenlet.
-        """ 
-        while True:
-            if self.playing:
-                self.advance_frame()
-            gevent.sleep( config.FRAME_INTERVAL )
-       
-
-    def play( self ):
-
-        logging.info( "Player.play()")
-        
-        if not self.playing:
-
-            # rewind to start
-            self.container.seek( 0 )
-
-            # set playing flag. affects behaviour of self.run
-            self.playing = True
-
-
-    def stop( self ):
-        
-        logging.info( "Player.stop()")
-
-        # set playing flag. affects behaviour of self.run
-        self.playing = False
+        Called every time a client wants an update.
+        Only actually get the next frame if enough time has passed since we got the last one.
+        """
+        now = time.time()
+        if (now - self.last_frame_time) >= config.FRAME_INTERVAL:
+            self.get_next_frame()
+            self.last_frame_time = now
+        return self.current_frame
 
 
     def render_screen( self, terminal_width=80, terminal_height=25 ):
@@ -93,6 +71,9 @@ class Player( object ):
         Render and return the current frame image as a drawille screen.
         """
         screen = None
+        
+        self.update_frame()
+
         if self.current_frame:
             return vidille.image2term(
                 self.current_frame.convert("L"),
@@ -102,7 +83,7 @@ class Player( object ):
                 invert = True
             )
         return screen
-
+    
 
 # global player instance
 player = Player( config.MEDIA_FILE ) 
@@ -133,16 +114,14 @@ class MyTelnetHandler( TelnetHandler ):
     """
     def session_start( self ):
 
-        global num_clients
-
-         # we'll use these to keep track of render rate
+        # we'll use these to keep track of render rate
         self.frames_rendered = 0
         self.time_connected = time.time()
 
-        # increment global client counter
-        num_clients += 1
-        logging.info( "%d clients connected", num_clients )
-        
+
+        # TODO: num_clients was unreliable, so find a better way to limit connections
+        num_clients = 0
+
         if num_clients > config.MAX_CLIENTS:
 
             # display capacity message if we're at capacity
@@ -157,10 +136,6 @@ class MyTelnetHandler( TelnetHandler ):
         
         else: 
             ## start a new rendering session
-
-            if not player.playing:
-                player.play()
-
             # start update timer and render first frame
             self.on_delay()
 
@@ -217,8 +192,6 @@ class MyTelnetHandler( TelnetHandler ):
     """
     def session_end( self ):
         
-        global num_clients
-        
         logging.info( "Disconnected" )
         
         if (self.frames_rendered is not None) and (self.frames_rendered > 0):
@@ -232,14 +205,6 @@ class MyTelnetHandler( TelnetHandler ):
                     self.frames_rendered / connected_time
                 )
             )
-        
-        # decrement global client counter
-        num_clients -= 1
-        logging.info( "%d clients currently connected", num_clients )
-
-        # stop the global player instance if we're the last connected client
-        if num_clients <=0:
-            player.stop()
 
 
 # log to console
@@ -255,9 +220,6 @@ server = gevent.server.StreamServer(
     MyTelnetHandler.streamserver_handle
 )
 
-# spawn a greenlet to run the global video update
-greenlet = gevent.spawn( player.run )
-greenlet.start()
 
 # start the telnet server
 try:
