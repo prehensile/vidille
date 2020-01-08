@@ -22,6 +22,7 @@ from telnetsrv import telnetsrvlib
 
 import vidille
 import av
+from av import AVError
 
 import config
 
@@ -50,9 +51,10 @@ class Player( object ):
         try:
             f = next( self.container.decode(video=0) )
             self.current_frame = f.to_image()
-        except StopIteration:
+        except (StopIteration, AVError):
             # loop container if we've hit the end
             self.container.seek( 0 )
+            logging.debug( "loop!")
 
 
     def run( self ):
@@ -117,6 +119,14 @@ class MyTelnetHandler( TelnetHandler ):
     WELCOME = ""
 
 
+    def __init__(self, request, client_address, server):
+        
+        self.frames_rendered = 0
+
+        # Call super init method
+        TelnetHandler.__init__(self, request, client_address, server)
+
+
     """
     Runs when a client connects. 
     Start an update loop for this client or display a capacity-reached message.
@@ -174,7 +184,7 @@ class MyTelnetHandler( TelnetHandler ):
                 self.on_delay
             )
        
-        except BrokenPipeError:
+        except (BrokenPipeError, OSError, ConnectionResetError):
             # disconnect client if remote client has, in fact, disconnected
             self.finish()
     
