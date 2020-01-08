@@ -104,6 +104,10 @@ class MyTelnetHandler( TelnetHandler ):
         
         self.frames_rendered = 0
 
+        # default size value in case terminal doesn't report them
+        self.WIDTH = 80
+        self.HEIGHT = 25
+
         # Call super init method
         TelnetHandler.__init__(self, request, client_address, server)
 
@@ -117,7 +121,6 @@ class MyTelnetHandler( TelnetHandler ):
         # we'll use these to keep track of render rate
         self.frames_rendered = 0
         self.time_connected = time.time()
-
 
         # TODO: num_clients was unreliable, so find a better way to limit connections
         num_clients = 0
