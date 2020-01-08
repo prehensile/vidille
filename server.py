@@ -244,12 +244,16 @@ class MyTelnetHandler( TelnetHandler ):
 
 # log to console
 logging.basicConfig(
-    level= config.LOG_LEVEL,
-    handlers = [logging.StreamHandler()]
+    level = config.LOG_LEVEL,
+    handlers = [logging.StreamHandler()],
+    format = '%(asctime)-15s: %(message)s'
 )
 
 # set up a server instance
-server = gevent.server.StreamServer(("", config.SERVER_PORT), MyTelnetHandler.streamserver_handle)
+server = gevent.server.StreamServer(
+    ("", config.SERVER_PORT),
+    MyTelnetHandler.streamserver_handle
+)
 
 # spawn a greenlet to run the global video update
 greenlet = gevent.spawn( player.run )
