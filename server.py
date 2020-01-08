@@ -50,7 +50,6 @@ class Player( object ):
         except (StopIteration, AVError):
             # loop container if we've hit the end
             self.container.seek( 0 )
-            logging.debug( "loop!")
         return self.current_frame
         
 
