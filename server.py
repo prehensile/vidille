@@ -79,7 +79,7 @@ class Player( object ):
                 canvas_width = terminal_width * 2,
                 canvas_height = terminal_height * 4,
                 dither = False,
-                invert = True
+                invert = False
             )
         return screen
     
