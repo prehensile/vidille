@@ -9,13 +9,14 @@ by prehensile [ twitter.com/prehensile | me@prehensile.co.uk ]
 A hack of image2term3, which uses pyav to pull frames from a video,
 drawille to render frames and curses to draw frames in the terminal. 
 
-I'm pleasantly surprised it works at all,
-let alone at a reasonable frame rate!
+I'm pleasantly surprised it works at all, let alone at a reasonable frame rate!
 
 Requires:
 - drawille: https://pypi.org/project/drawille/
 - Pillow: https://pypi.org/project/Pillow/
 - PyAV (and its dependencies): https://pypi.org/project/av/
+
+For a running demo, try `telnet spacewizards.org 2020`
 
 """
 
