@@ -12,6 +12,7 @@ drawille to render frames and curses to draw frames in the terminal.
 I'm pleasantly surprised it works at all, let alone at a reasonable frame rate!
 
 Requires:
+- Python 3
 - drawille: https://pypi.org/project/drawille/
 - Pillow: https://pypi.org/project/Pillow/
 - PyAV (and its dependencies): https://pypi.org/project/av/
