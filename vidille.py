@@ -25,7 +25,12 @@ import curses
 
 import av
 from drawille import Canvas
-from PIL import Image
+try:
+    from PIL import Image
+except:
+    from sys import stderr
+    stderr.write('[E] PIL not installed\n')
+    exit(1)
 
 
 def image2term(i:Image, canvas_width=160, canvas_height=100, threshold=128, dither=False, invert=False):
