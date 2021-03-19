@@ -2,5 +2,5 @@ av==6.2.0
 drawille==0.1.0
 gevent==1.4.0
 greenlet==0.4.15
-Pillow==6.2.1
+Pillow==8.1.1
 git+https://github.com/prehensile/telnetsrvlib3.git
